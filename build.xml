@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="runThrghTestNG" default="run" basedir=".">
+    
+    <condition property="ant.dir" value="/usr/share/java/ant-contrib-1.0b3.jar">
+        <matches string="${antOS}" pattern="linux*"/>
+    </condition>
+    
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="${ant.dir}"/>            
+        </classpath>
+    </taskdef>
+   
+    <target name="set_env">        
+        <if>
+            <contains string="${callUrl}" substring="ecqa"/>
+            <then>
+                <var name="environment" value="qa" />                    
+            </then>
+        </if>
+    </target>
+    
+    <property name="classes.dir" value="bin" />
+    <property name="src.dir" value="src" />
+    <property name="report.dir" value="reports" />
+
+    <path id="libs">
+        <fileset dir="lib">
+            <include name="*.jar"/>
+        </fileset>
+        <pathelement path="${basedir}\${classes.dir}"/>
+    </path>
+
+
+<!-- All Suite linking -->
+    <target name="runmidnight">
+        <antcall target="init"/>
+        <antcall target="compile"/>
+        <antcall target="copy-resources"/>
+        <antcall target="runmidnighttest"/>
+        <antcall target="testng-xslt-report"/>               
+    </target>  
+
+ 
+    
+    <!-- Smoke Suite linking --> 
+    <target name="runsmoke">
+        <antcall target="init"/>
+        <antcall target="compile"/>
+        <antcall target="copy-resources"/>
+        <antcall target="runsmoketests"/>
+        <antcall target="testng-xslt-report"/>        
+    </target> 
+    
+    <!-- Search Suite linking --> 
+   <target name="runsearch">
+        <antcall target="init"/>
+        <antcall target="compile"/>
+        <antcall target="copy-resources"/>
+        <antcall target="runSearchTests"/>
+        <antcall target="testng-xslt-report"/>        
+    </target>  
+   
+    <!-- Orders Suite linking -->
+    <target name="runorders">
+        <antcall target="init"/>
+        <antcall target="compile"/>
+        <antcall target="copy-resources"/>
+        <antcall target="runorderstests"/>
+        <antcall target="testng-xslt-report"/>        
+    </target> 
+
+    <!-- PO Suite linking -->
+    <target name="runpo">
+        <antcall target="init"/>
+        <antcall target="compile"/>
+        <antcall target="copy-resources"/>
+        <antcall target="runpotests"/>
+        <antcall target="testng-xslt-report"/>        
+    </target> 
+      
+   
+    <!-- Add record Suite linking -->   
+    <target name="runaddrecord">
+        <antcall target="init"/>
+        <antcall target="compile"/>
+        <antcall target="copy-resources"/>
+        <antcall target="runaddtests"/>
+        <antcall target="testng-xslt-report"/>        
+    </target>   
+      
+    <!-- Tab navigation Suite linking -->
+    <target name="runtabtest">
+        <antcall target="init"/>
+        <antcall target="compile"/>
+        <antcall target="copy-resources"/>
+        <antcall target="runtabtests"/>
+        <antcall target="testng-xslt-report"/>        
+    </target>
+    
+    
+    <target name="runestimates">
+        <antcall target="init"/>
+        <antcall target="compile"/>
+        <antcall target="copy-resources"/>
+        <antcall target="runestimatetests"/>
+        <antcall target="testng-xslt-report"/>        
+    </target>
+
+    <target name="runestimates1">
+        <antcall target="init"/>
+        <antcall target="compile"/>
+        <antcall target="copy-resources"/>
+        <antcall target="runestimatetests1"/>
+        <antcall target="testng-xslt-report"/>        
+    </target>
+    
+    <target name="runestimates2">
+        <antcall target="init"/>
+        <antcall target="compile"/>
+        <antcall target="copy-resources"/>
+        <antcall target="runestimatetests2"/>
+        <antcall target="testng-xslt-report"/>        
+    </target>
+ 
+    <!-- Delete old data and create new directories -->
+    <target name="init" >
+        <echo>Initlizing...</echo>
+        <delete dir="${classes.dir}" />
+        <mkdir dir="${classes.dir}"/>
+        <delete dir="${report.dir}" />
+        <mkdir dir="${report.dir}"/>        
+    </target>
+  
+    <!-- Complies the java files -->
+    <target name="compile">
+        <echo>Compiling...</echo>
+        <javac includeantruntime="false" debug="true" srcdir="${src.dir}" destdir="${classes.dir}" classpathref="libs" />
+    </target>
+ 
+    <target name="copy-resources" description="Copies resources.">
+        <copy todir="${basedir}\${classes.dir}">
+            <fileset dir="${src.dir}">
+                <include name="**/*.properties" />
+            </fileset>
+        </copy>
+    </target>
+    
+    <!-- Runs the file and generates Reportng report -->
+  
+    <!-- Full Suite report format --> 
+    <target name="runmidnighttest" description="Running All tests">
+        <echo>Running All Tests...</echo>
+        <taskdef resource="testngtasks" classpathref="libs"/>        
+        <for list="${antUrl}" param = "url">
+            <sequential>
+                <echo>Url: @{url}</echo>
+                <antcallback target="set_env" return="environment">
+                    <param name="callUrl" value="@{url}"/>
+                </antcallback>
+                <echo>callback: ${environment}</echo>
+                <for list="${antBrwsr}" param = "browser">
+                    <sequential>
+                        <echo>Driver: @{browser}</echo>
+                        <testng outputDir="${report.dir}" classpathref="libs" delegatecommandsystemproperties="true">  
+                            <xmlfileset dir="${basedir}" includes="midnight.xml"/>
+                            <sysproperty key="url" value="@{url}"/>
+                            <sysproperty key="environment" value="${environment}"/>   
+                            <sysproperty key="browser" value="@{browser}"/>
+                            <sysproperty key="os" value="${antOS}"/>
+                            <sysproperty key="test" value="MidnightTests"/>
+                        </testng>
+                    </sequential>
+                </for> 
+            </sequential>                
+        </for>            
+    </target>     
+     
+        
+    <!-- Smoke Suite report format -->       
+    <target name="runsmoketests" description="Running Sample tests">
+        <echo>Running Smoke Tests...</echo>
+        <taskdef resource="testngtasks" classpathref="libs"/>        
+        <for list="${antUrl}" param = "url">
+            <sequential>
+                <echo>Url: @{url}</echo>
+                <antcallback target="set_env" return="environment">
+                    <param name="callUrl" value="@{url}"/>
+                </antcallback>
+                <echo>callback: ${environment}</echo>
+                <for list="${antBrwsr}" param = "browser">
+                    <sequential>
+                        <echo>Driver: @{browser}</echo>
+                        <testng outputDir="${report.dir}" classpathref="libs" delegatecommandsystemproperties="true">  
+                            <xmlfileset dir="${basedir}" includes="smoke.xml"/>
+                            <sysproperty key="url" value="@{url}"/>
+                            <sysproperty key="environment" value="${environment}"/>   
+                            <sysproperty key="browser" value="@{browser}"/>
+                            <sysproperty key="os" value="${antOS}"/>
+                            <sysproperty key="test" value="SmokeTests"/>
+                        </testng>
+                    </sequential>
+                </for> 
+            </sequential>                
+        </for>            
+    </target>  
+  
+
+    <!-- Search Suite report format --> 
+    <target name="runSearchTests" description="Running Search tests">
+        <echo>Running Search Tests...</echo>
+        <taskdef resource="testngtasks" classpathref="libs"/>        
+        <for list="${antUrl}" param = "url">
+            <sequential>
+                <echo>Url: @{url}</echo>
+                <antcallback target="set_env" return="environment">
+                    <param name="callUrl" value="@{url}"/>
+                </antcallback>
+                <echo>callback: ${environment}</echo>
+                <for list="${antBrwsr}" param = "browser">
+                    <sequential>
+                        <echo>Driver: @{browser}</echo>
+                        <testng outputDir="${report.dir}" classpathref="libs" delegatecommandsystemproperties="true">  
+                            <xmlfileset dir="${basedir}" includes="search.xml"/>
+                            <sysproperty key="url" value="@{url}"/>
+                            <sysproperty key="environment" value="${environment}"/>   
+                            <sysproperty key="browser" value="@{browser}"/>
+                            <sysproperty key="os" value="${antOS}"/>
+                            <sysproperty key="test" value="SearchTests"/>
+                        </testng>
+                    </sequential>
+                </for> 
+            </sequential>                
+        </for>            
+    </target>  
+
+    <!-- Orders Suite report format --> 
+    <target name="runorderstests" description="Running Orders tests">
+        <echo>Running Orders Tests...</echo>
+        <taskdef resource="testngtasks" classpathref="libs"/>        
+        <for list="${antUrl}" param = "url">
+            <sequential>
+                <echo>Url: @{url}</echo>
+                <antcallback target="set_env" return="environment">
+                    <param name="callUrl" value="@{url}"/>
+                </antcallback>
+                <echo>callback: ${environment}</echo>
+                <for list="${antBrwsr}" param = "browser">
+                    <sequential>
+                        <echo>Driver: @{browser}</echo>
+                        <testng outputDir="${report.dir}" classpathref="libs" delegatecommandsystemproperties="true">  
+                            <xmlfileset dir="${basedir}" includes="Orders.xml"/>
+                            <sysproperty key="url" value="@{url}"/>
+                            <sysproperty key="environment" value="${environment}"/>   
+                            <sysproperty key="browser" value="@{browser}"/>
+                            <sysproperty key="os" value="${antOS}"/>
+                            <sysproperty key="test" value="OrdersTests"/>
+                        </testng>
+                    </sequential>
+                </for> 
+            </sequential>                
+        </for>            
+    </target>     
+    
+    <!-- PO Suite report format --> 
+    <target name="runpotests" description="Running PO tests">
+        <echo>Running PO Tests...</echo>
+        <taskdef resource="testngtasks" classpathref="libs"/>        
+        <for list="${antUrl}" param = "url">
+            <sequential>
+                <echo>Url: @{url}</echo>
+                <antcallback target="set_env" return="environment">
+                    <param name="callUrl" value="@{url}"/>
+                </antcallback>
+                <echo>callback: ${environment}</echo>
+                <for list="${antBrwsr}" param = "browser">
+                    <sequential>
+                        <echo>Driver: @{browser}</echo>
+                        <testng outputDir="${report.dir}" classpathref="libs" delegatecommandsystemproperties="true">  
+                            <xmlfileset dir="${basedir}" includes="PO.xml"/>
+                            <sysproperty key="url" value="@{url}"/>
+                            <sysproperty key="environment" value="${environment}"/>   
+                            <sysproperty key="browser" value="@{browser}"/>
+                            <sysproperty key="os" value="${antOS}"/>
+                            <sysproperty key="test" value="PO"/>
+                        </testng>
+                    </sequential>
+                </for> 
+            </sequential>                
+        </for>            
+    </target>     
+    
+ 
+    <!-- Running Addition of record tests Suite report format --> 
+    <target name="runaddtests" description="Running Addition of record tests">
+        <echo>Running Addition of record Tests...</echo>
+        <taskdef resource="testngtasks" classpathref="libs"/>        
+        <for list="${antUrl}" param = "url">
+            <sequential>
+                <echo>Url: @{url}</echo>
+                <antcallback target="set_env" return="environment">
+                    <param name="callUrl" value="@{url}"/>
+                </antcallback>
+                <echo>callback: ${environment}</echo>
+                <for list="${antBrwsr}" param = "browser">
+                    <sequential>
+                        <echo>Driver: @{browser}</echo>
+                        <testng outputDir="${report.dir}" classpathref="libs" delegatecommandsystemproperties="true">  
+                            <xmlfileset dir="${basedir}" includes="Addfunction.xml"/>
+                            <sysproperty key="url" value="@{url}"/>
+                            <sysproperty key="environment" value="${environment}"/>   
+                            <sysproperty key="browser" value="@{browser}"/>
+                            <sysproperty key="os" value="${antOS}"/>
+                            <sysproperty key="test" value="SampleTests"/>
+                        </testng>
+                    </sequential>
+                </for> 
+            </sequential>                
+        </for>            
+    </target>  
+ 
+       
+ 
+    <!-- Running Addition of record tests Suite report format --> 
+    <target name="runestimatetests" description="Running Addition of record tests">
+        <echo>Running Addition of record Tests...</echo>
+        <taskdef resource="testngtasks" classpathref="libs"/>        
+        <for list="${antUrl}" param = "url">
+            <sequential>
+                <echo>Url: @{url}</echo>
+                <antcallback target="set_env" return="environment">
+                    <param name="callUrl" value="@{url}"/>
+                </antcallback>
+                <echo>callback: ${environment}</echo>
+                <for list="${antBrwsr}" param = "browser">
+                    <sequential>
+                        <echo>Driver: @{browser}</echo>
+                        <testng outputDir="${report.dir}" classpathref="libs" delegatecommandsystemproperties="true">  
+                            <xmlfileset dir="${basedir}" includes="Estimates.xml"/>
+                            <sysproperty key="url" value="@{url}"/>
+                            <sysproperty key="environment" value="${environment}"/>   
+                            <sysproperty key="browser" value="@{browser}"/>
+                            <sysproperty key="os" value="${antOS}"/>
+                            <sysproperty key="test" value="SampleTests"/>
+                        </testng>
+                    </sequential>
+                </for> 
+            </sequential>                
+        </for>            
+    </target>      
+  <!-- Running Addition of record tests Suite report format --> 
+    <target name="runestimatetests1" description="Running Addition of record tests">
+        <echo>Running Addition of record Tests...</echo>
+        <taskdef resource="testngtasks" classpathref="libs"/>        
+        <for list="${antUrl}" param = "url">
+            <sequential>
+                <echo>Url: @{url}</echo>
+                <antcallback target="set_env" return="environment">
+                    <param name="callUrl" value="@{url}"/>
+                </antcallback>
+                <echo>callback: ${environment}</echo>
+                <for list="${antBrwsr}" param = "browser">
+                    <sequential>
+                        <echo>Driver: @{browser}</echo>
+                        <testng outputDir="${report.dir}" classpathref="libs" delegatecommandsystemproperties="true">  
+                            <xmlfileset dir="${basedir}" includes="Estimates1.xml"/>
+                            <sysproperty key="url" value="@{url}"/>
+                            <sysproperty key="environment" value="${environment}"/>   
+                            <sysproperty key="browser" value="@{browser}"/>
+                            <sysproperty key="os" value="${antOS}"/>
+                            <sysproperty key="test" value="SampleTests"/>
+                        </testng>
+                    </sequential>
+                </for> 
+            </sequential>                
+        </for>            
+    </target>       
+    
+    <target name="runestimatetests2" description="Running Addition of record tests">
+        <echo>Running Addition of record Tests...</echo>
+        <taskdef resource="testngtasks" classpathref="libs"/>        
+        <for list="${antUrl}" param = "url">
+            <sequential>
+                <echo>Url: @{url}</echo>
+                <antcallback target="set_env" return="environment">
+                    <param name="callUrl" value="@{url}"/>
+                </antcallback>
+                <echo>callback: ${environment}</echo>
+                <for list="${antBrwsr}" param = "browser">
+                    <sequential>
+                        <echo>Driver: @{browser}</echo>
+                        <testng outputDir="${report.dir}" classpathref="libs" delegatecommandsystemproperties="true">  
+                            <xmlfileset dir="${basedir}" includes="Estimates2.xml"/>
+                            <sysproperty key="url" value="@{url}"/>
+                            <sysproperty key="environment" value="${environment}"/>   
+                            <sysproperty key="browser" value="@{browser}"/>
+                            <sysproperty key="os" value="${antOS}"/>
+                            <sysproperty key="test" value="SampleTests"/>
+                        </testng>
+                    </sequential>
+                </for> 
+            </sequential>                
+        </for>            
+    </target>       
+    
+    <!-- Generate XSLT reports -->
+    <target name="testng-xslt-report">
+        <for list="${antUrl}" param = "url">
+            <sequential>
+                <antcallback target="set_env" return="environment">
+                    <param name="callUrl" value="@{url}"/>
+                </antcallback>
+                <echo>callback: ${environment}</echo>
+                <for list="${antBrwsr}" param = "browser">
+                    <sequential>
+                        <if>
+                            <available file="${basedir}/${report.dir}" type="dir"/>
+                            <then>
+                                <xslt in="${basedir}/${report.dir}/testng-results.xml" 
+                                      style="${basedir}/testng-results.xsl" 
+                                      out="${basedir}/${report.dir}/testng-xslt/index.html">
+                                    <param expression="${basedir}/${report.dir}/testng-xslt/" name="testNgXslt.outputDir"/>
+                                    <param expression="true" name="testNgXslt.sortTestCaseLinks"/>
+                                    <param expression="FAIL,SKIP,PASS,CONF,BY_CLASS" name="testNgXslt.testDetailsFilter" />
+                                    <param expression="true" name="testNgXslt.showRuntimeTotals"/>
+                                    <classpath refid="libs"/>
+                                </xslt>
+                            </then>
+                            <else>
+                                <echo>XSLT report is not generated as 'reports' folder is missing</echo>
+                            </else>
+                        </if>                            
+                    </sequential>
+                </for> 
+            </sequential>
+        </for>        
+    </target>   
+
+</project>
+
+
+
